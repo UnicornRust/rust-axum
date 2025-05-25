@@ -1,5 +1,5 @@
 use axum::{debug_handler, routing, Router};
-use rust_axum::logger;
+use rust_axum::{ database, logger};
 use tokio::{net::TcpListener};
 use rust_axum::config;
 
@@ -10,22 +10,24 @@ use rust_axum::config;
 // 3. 服务
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()>{
 
     // 初始化日志
     logger::init();
+
+    let db = database::init().await?;
 
     // 构建路由
     let routes = Router::new()
         .route("/", routing::get(index));
 
-    let port = config::get().server.port();
+    let port = config::get().server().port();
     // 监听端口
     let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await.unwrap();
     tracing::info!("Listening on http://127.0.0.1:{port}");
     // 3. 开启服务
-    axum::serve(listener, routes).await.unwrap();
-
+    axum::serve(listener, routes).await?;
+    Ok(())
 }
 
 
