@@ -1,0 +1,13 @@
+[package]
+name = "rust-axum"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = { version = "0.8.4", features = ["macros"] }
+tokio = { version = "1.45.0", features = ["full"] }
+tracing = { version = "0.1.41", features = ["async-await"] }
+tracing-subscriber = { version = "0.3.17", features = ["env-filter", "chrono"] }
+config = { version = "0.15.11", features = ["yaml"] }
+serde = {version = "1.0.219", features = ["derive"]}
+anyhow = "1.0.98"
