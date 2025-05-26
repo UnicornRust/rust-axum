@@ -7,5 +7,5 @@ database:
   username: postgres
   password: postgres
   database: web_axum
-  schema: axum
+  schema: public
 
