@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 
 use crate::serde::deserialize_number;
 
@@ -10,11 +11,14 @@ use crate::serde::deserialize_number;
 const DEFAULT_PAGE: u64 = 1;
 const DEFAULT_SIZE: u64 = 15;
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Validate)]
 pub struct PaginationParams {
     // 提供自定义的反序列函数
+    #[validate(range(min = 1, message = "页码必须大于0"))]
     #[serde(default = "default_page", deserialize_with = "deserialize_number")]
     pub page: u64,
+
+    #[validate(range(min = 1, max = 100,message = "分页大小必须大于0"))]
     #[serde(default = "default_size", deserialize_with = "deserialize_number")]
     pub size: u64,
 }

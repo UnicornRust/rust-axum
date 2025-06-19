@@ -1,10 +1,12 @@
 use anyhow::Context;
 use axum::extract::Query;
 use axum::{Router, debug_handler, extract::State, routing};
+use axum_valid::Valid;
 use sea_orm::{
     ColumnTrait, Condition, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, QueryTrait,
 };
 use serde::Deserialize;
+use validator::Validate;
 
 use crate::app::AppState;
 use crate::common::{Page, PaginationParams};
@@ -18,10 +20,13 @@ pub fn create_router() -> Router<AppState> {
         .route("/page", routing::get(page_user))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct UserQueryParams {
     keyword: Option<String>,
+
+    // 嵌套校验内层结构
+    #[validate(nested)]
     #[serde(flatten)]
     pagination: PaginationParams,
 }
@@ -52,10 +57,12 @@ async fn query_users(
 #[debug_handler]
 async fn page_user(
     State(AppState { db }): State<AppState>,
-    Query(UserQueryParams {
+    // Query 抽取器取出参数
+    // Valid 将抽取出来的结果进行校验
+    Valid(Query(UserQueryParams {
         keyword,
         pagination,
-    }): Query<UserQueryParams>,
+    })): Valid<Query<UserQueryParams>>
 ) -> ApiResult<ApiResponse<Page<sys_user::Model>>> {
     let paginator = SysUser::find()
         .apply_if(keyword.as_ref(), |query, keyword| {
