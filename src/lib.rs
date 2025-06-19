@@ -8,3 +8,6 @@ pub mod server;
 pub mod app;
 pub mod error;
 pub mod response;
+pub mod latency;
+pub mod common;
+pub mod serde;

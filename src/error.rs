@@ -10,10 +10,16 @@ pub type ApiResult<T> = Result<T, ApiError>;
 pub enum ApiError {
     #[error("Not Found")]
     NotFound,
+
     #[error("Method Not Allowed")]
     MethodNotAllowed,
+
+    #[error("Database Error: {0}")]
+    DatabaseErr(#[from] sea_orm::DbErr),
+
     #[error("{0}")]
     Biz(String),
+
     #[error("Error: {0}")]
     Internal(#[from] anyhow::Error)
 }
@@ -23,8 +29,8 @@ impl ApiError {
         match self{
             ApiError::NotFound => StatusCode::NOT_FOUND,
             ApiError::MethodNotAllowed => StatusCode::METHOD_NOT_ALLOWED,
+            ApiError::DatabaseErr(_) | ApiError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Biz(_) => StatusCode::BAD_REQUEST,
-            ApiError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR
         }
     }
 }

@@ -1,6 +1,5 @@
 use rust_axum::{ app, routes};
 
-
 // Axum web 开发三部曲 
 //
 // 1. 路由

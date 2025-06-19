@@ -42,3 +42,23 @@ RUST_LOG=debug cargo run
 ```shell
   cargo install sea-orm-cli
 ```
+
+## thiserror 自定义错误
+
+- [thiserror](https://docs.rs/thiserror/latest/thiserror/)
+
+## tower-http 中间件
+
+- [tower-http](https://docs.rs/tower-http/latest/tower_http/)
+
+可以处理常见的例如：请求的追踪日志，跨域，限流, 超时，路径处理等中间层
+
+### trace
+
+- trace 特性可以追踪请求的调试日志，结合 tracing-subscriber 可以实现日志的输出
+
+### validator 验证中间件
+
+- [validator](https://docs.rs/validator/latest/validator/)
+
+进行请求参数的校验，提前校验一些异常的参数,防止后续的逻辑出错
