@@ -1,7 +1,6 @@
 use anyhow::Context;
-use axum::extract::Query;
-use axum::{Router, debug_handler, extract::State, routing};
-use axum_valid::Valid;
+use axum::{Router, debug_handler, routing};
+use axum::extract::State;
 use sea_orm::{
     ColumnTrait, Condition, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, QueryTrait,
 };
@@ -12,7 +11,9 @@ use crate::app::AppState;
 use crate::common::{Page, PaginationParams};
 use crate::entity::{prelude::SysUser, sys_user};
 use crate::error::ApiResult;
+use crate::param_valid::Query;
 use crate::response::ApiResponse;
+use crate::valid::Valid;
 
 pub fn create_router() -> Router<AppState> {
     Router::new()

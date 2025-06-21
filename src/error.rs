@@ -1,5 +1,9 @@
 
-use axum::{http::StatusCode, response::IntoResponse, Json};
+use axum::extract::rejection::{JsonRejection, PathRejection, QueryRejection};
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
+use axum::Json;
+use axum_valid::ValidRejection;
 
 use crate::response::ApiResponse;
 
@@ -17,6 +21,18 @@ pub enum ApiError {
     #[error("Database Error: {0}")]
     DatabaseErr(#[from] sea_orm::DbErr),
 
+    #[error("查询参数错误: {0}")]
+    Query(#[from] QueryRejection),
+
+    #[error("路径参数错误: {0}")]
+    Path(#[from] PathRejection),
+
+    #[error("Body参数错误: {0}")]
+    Json(#[from] JsonRejection),
+
+    #[error("参数校验错误")]
+    Validation(String),
+
     #[error("{0}")]
     Biz(String),
 
@@ -24,10 +40,23 @@ pub enum ApiError {
     Internal(#[from] anyhow::Error)
 }
 
+
+impl From<ValidRejection<ApiError>> for ApiError {
+    fn from(value: ValidRejection<ApiError>) -> Self {
+        match value {
+            ValidRejection::Valid(errors) => ApiError::Validation(errors.to_string()),
+            ValidRejection::Inner(error) => error,
+        }
+    }
+}
+
+
+
 impl ApiError {
     pub fn status_code(&self) -> StatusCode {
         match self{
             ApiError::NotFound => StatusCode::NOT_FOUND,
+            ApiError::Query(_) | ApiError::Path(_) | ApiError::Json(_) | ApiError::Validation(_) => StatusCode::BAD_REQUEST,
             ApiError::MethodNotAllowed => StatusCode::METHOD_NOT_ALLOWED,
             ApiError::DatabaseErr(_) | ApiError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Biz(_) => StatusCode::BAD_REQUEST,
