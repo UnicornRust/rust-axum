@@ -1,8 +1,10 @@
 use anyhow::Context;
+use crate::entity::sys_user::ActiveModel;
 use axum::{Router, debug_handler, routing};
 use axum::extract::State;
+use sea_orm::{prelude::*, IntoActiveModel};
 use sea_orm::{
-    ColumnTrait, Condition, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, QueryTrait,
+    ColumnTrait, Condition, DeriveIntoActiveModel, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, QueryTrait
 };
 use serde::Deserialize;
 use validator::Validate;
@@ -11,14 +13,14 @@ use crate::app::AppState;
 use crate::common::{Page, PaginationParams};
 use crate::entity::{prelude::SysUser, sys_user};
 use crate::error::ApiResult;
-use crate::param_valid::Query;
 use crate::response::ApiResponse;
-use crate::valid::ValidQuery;
+use crate::valid::{ValidJson, ValidQuery};
 
 pub fn create_router() -> Router<AppState> {
     Router::new()
         .route("/", routing::get(query_users))
         .route("/page", routing::get(page_user))
+        .route("/create", routing::post(create_user))
 }
 
 #[derive(Debug, Deserialize, Validate)]
@@ -81,4 +83,37 @@ async fn page_user(
     let page = Page::from_pagination(pagination, total, items);
 
     Ok(ApiResponse::ok("ok", Some(page)))
+}
+
+#[derive(Debug, Deserialize, Validate, DeriveIntoActiveModel)]
+pub struct UserParams {
+
+    #[validate(length(min = 2, max = 20, message = "姓名长度1-20"))]
+    pub name: String,
+    pub gender: String,
+    #[validate(length(min = 1, max = 20, message = "账号长度1-20"))]
+    pub account: String,
+
+    // 常见的简单校验器已经内置
+    #[validate(length(min = 6, max = 20, message = "密码长度6-20"))]
+    pub password: String,
+
+    // 自定义的校验器，校验手机号, 指定方法，方法中返回的错误将作为校验失败的错误
+    #[validate(custom(function = "crate::utils::validation::is_mobile_phone"))]
+    pub mobile_phone: String,
+
+    pub birthday: Date,
+    #[serde(default)]
+    pub enabled: bool,
+}
+
+pub async fn create_user(
+    State(AppState { db }): State<AppState>,
+    ValidJson(user_params): ValidJson<UserParams>
+) -> ApiResult<ApiResponse<sys_user::Model>> {
+    let user_model  = user_params.into_active_model();
+    // id 需要自己生成
+    // 
+    let result = user_model.insert(&db).await?;
+    Ok(ApiResponse::ok("ok", Some(result)))
 }
