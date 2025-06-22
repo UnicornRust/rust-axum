@@ -13,7 +13,7 @@ use crate::entity::{prelude::SysUser, sys_user};
 use crate::error::ApiResult;
 use crate::param_valid::Query;
 use crate::response::ApiResponse;
-use crate::valid::Valid;
+use crate::valid::ValidQuery;
 
 pub fn create_router() -> Router<AppState> {
     Router::new()
@@ -60,10 +60,10 @@ async fn page_user(
     State(AppState { db }): State<AppState>,
     // Query 抽取器取出参数
     // Valid 将抽取出来的结果进行校验
-    Valid(Query(UserQueryParams {
+    ValidQuery(UserQueryParams {
         keyword,
         pagination,
-    })): Valid<Query<UserQueryParams>>
+    }): ValidQuery<UserQueryParams>
 ) -> ApiResult<ApiResponse<Page<sys_user::Model>>> {
     let paginator = SysUser::find()
         .apply_if(keyword.as_ref(), |query, keyword| {
@@ -77,7 +77,7 @@ async fn page_user(
         .paginate(&db, pagination.size);
 
     let total = paginator.num_items().await?;
-    let items = paginator.fetch_page(pagination.size - 1).await?;
+    let items = paginator.fetch_page(pagination.page - 1).await?;
     let page = Page::from_pagination(pagination, total, items);
 
     Ok(ApiResponse::ok("ok", Some(page)))
