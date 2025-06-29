@@ -10,7 +10,7 @@ const MOBILE_PHONE_REGEX: LazyCell<Regex> =
 
 
 pub fn is_mobile_phone(value: &str) -> Result<(), ValidationError> {
-    if (MOBILE_PHONE_REGEX.is_match(value)) {
+    if MOBILE_PHONE_REGEX.is_match(value) {
         Ok(())
     } else {
         Err(build_validation_error("手机号码格式不正确"))

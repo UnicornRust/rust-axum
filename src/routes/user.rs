@@ -1,8 +1,10 @@
 use anyhow::Context;
 use crate::entity::sys_user::ActiveModel;
+use crate::enums::Gender;
+use crate::param_valid::Path;
 use axum::{Router, debug_handler, routing};
 use axum::extract::State;
-use sea_orm::{prelude::*, IntoActiveModel};
+use sea_orm::{prelude::*, ActiveValue, IntoActiveModel};
 use sea_orm::{
     ColumnTrait, Condition, DeriveIntoActiveModel, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, QueryTrait
 };
@@ -12,7 +14,7 @@ use validator::Validate;
 use crate::app::AppState;
 use crate::common::{Page, PaginationParams};
 use crate::entity::{prelude::SysUser, sys_user};
-use crate::error::ApiResult;
+use crate::error::{ApiError, ApiResult};
 use crate::response::ApiResponse;
 use crate::valid::{ValidJson, ValidQuery};
 
@@ -21,6 +23,8 @@ pub fn create_router() -> Router<AppState> {
         .route("/", routing::get(query_users))
         .route("/page", routing::get(page_user))
         .route("/create", routing::post(create_user))
+        .route("/update/{id}", routing::put(update_user))
+        .route("/delete/{id}", routing::delete(delete_user))
 }
 
 #[derive(Debug, Deserialize, Validate)]
@@ -90,7 +94,7 @@ pub struct UserParams {
 
     #[validate(length(min = 2, max = 20, message = "姓名长度1-20"))]
     pub name: String,
-    pub gender: String,
+    pub gender: Gender,
     #[validate(length(min = 1, max = 20, message = "账号长度1-20"))]
     pub account: String,
 
@@ -107,13 +111,60 @@ pub struct UserParams {
     pub enabled: bool,
 }
 
+#[debug_handler]
 pub async fn create_user(
     State(AppState { db }): State<AppState>,
     ValidJson(user_params): ValidJson<UserParams>
 ) -> ApiResult<ApiResponse<sys_user::Model>> {
-    let user_model  = user_params.into_active_model();
-    // id 需要自己生成
-    // 
+    let mut user_model  = user_params.into_active_model();
+    user_model.password = ActiveValue::Set(
+        bcrypt::hash(
+            &user_model.password.take().unwrap(),
+            bcrypt::DEFAULT_COST
+        )?
+    );
+
     let result = user_model.insert(&db).await?;
     Ok(ApiResponse::ok("ok", Some(result)))
 }
+
+#[debug_handler]
+pub async fn update_user(
+    State(AppState { db }): State<AppState>,
+    Path(id):Path<String>,
+    ValidJson(user_params): ValidJson<UserParams>
+) -> ApiResult<ApiResponse<sys_user::Model>> {
+    let existed_user = SysUser::find_by_id(id).one(&db).await?
+        .ok_or_else(|| ApiError::Biz(String::from("待修改用户不存在")))?;
+    let pwd = user_params.password.clone();
+    let mut active_model = user_params.into_active_model();
+    if pwd.is_empty() {
+        active_model.password = ActiveValue::unchanged(existed_user.password);
+    }else {
+        active_model.password = ActiveValue::Set(bcrypt::hash(
+            &active_model.password.take().unwrap(),
+            bcrypt::DEFAULT_COST
+        )?);
+    }
+    let result =active_model.update(&db).await?;
+
+    Ok(ApiResponse::ok("ok", Some(result)))
+}   
+
+#[debug_handler]
+pub async fn delete_user(
+    State(AppState { db }): State<AppState>,
+    Path(id): Path<String>,
+) -> ApiResult<ApiResponse<()>> { 
+
+    let exists_user = SysUser::find_by_id(&id)
+        .one(&db)
+        .await?
+        .ok_or_else(|| ApiError::Biz(String::from("待删除用户不存在")))?;
+
+    // effect rows
+    let result = exists_user.delete(&db).await?;
+    tracing::info!("delete user: {}, rows: {}", id, result.rows_affected);
+    Ok(ApiResponse::ok("ok", None))
+}
+

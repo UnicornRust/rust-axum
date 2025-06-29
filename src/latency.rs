@@ -8,7 +8,7 @@ pub struct LatencyOnResponse;
 
 impl<B> OnResponse<B> for LatencyOnResponse {
 
-    fn on_response(self, response: &axum::http::Response<B>, latency: std::time::Duration, span: &tracing::Span) {
+    fn on_response(self, response: &axum::http::Response<B>, latency: std::time::Duration, _span: &tracing::Span) {
         tracing::info!(
             latency = %Latency(latency), 
             status = %response.status().as_u16(),

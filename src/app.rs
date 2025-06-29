@@ -1,6 +1,6 @@
 use sea_orm::DatabaseConnection;
 
-use crate::{database, config, logger, server::Server};
+use crate::{config, database, logger, server::Server, utils::generator};
 
 
 #[derive(Clone)]
@@ -17,6 +17,7 @@ impl AppState {
 
 pub async fn run(router: axum::Router<AppState>) -> anyhow::Result<()> {
     logger::init();
+    generator::init()?;
     tracing::info!("Starting app server...");
 
     let db = database::init().await?;
