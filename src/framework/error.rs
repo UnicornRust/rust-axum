@@ -5,7 +5,7 @@ use axum::response::IntoResponse;
 use axum_valid::ValidRejection;
 use bcrypt::BcryptError;
 
-use crate::response::ApiResponse;
+use crate::framework::response::ApiResponse;
 
 pub type ApiResult<T> = Result<T, ApiError>;
 
@@ -28,6 +28,9 @@ pub enum ApiError {
 
     #[error("Body参数错误: {0}")]
     Json(#[from] JsonRejection),
+
+    #[error("jwt 错误: {0}")]
+    Jwt(#[from] jsonwebtoken::errors::Error),
 
     #[error("参数校验错误")]
     Validation(String),
@@ -55,14 +58,14 @@ impl ApiError {
     pub fn status_code(&self) -> StatusCode {
         match self {
             ApiError::NotFound => StatusCode::NOT_FOUND,
-            ApiError::Query(_)
-            | ApiError::Path(_)
-            | ApiError::Json(_)
-            | ApiError::Validation(_) => StatusCode::BAD_REQUEST,
+            ApiError::Query(_) | ApiError::Path(_) | ApiError::Json(_) | ApiError::Validation(_) => { 
+                StatusCode::BAD_REQUEST 
+            }
             ApiError::MethodNotAllowed => StatusCode::METHOD_NOT_ALLOWED,
             ApiError::DatabaseErr(_) | ApiError::Bcrypt(_) | ApiError::Internal(_) => {
                 StatusCode::INTERNAL_SERVER_ERROR
             }
+            ApiError::Jwt(_) => StatusCode::UNAUTHORIZED,
             ApiError::Biz(_) => StatusCode::BAD_REQUEST,
         }
     }

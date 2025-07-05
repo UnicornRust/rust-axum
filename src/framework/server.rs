@@ -9,7 +9,7 @@ use tower_http::normalize_path::NormalizePathLayer;
 use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::{DefaultOnResponse, TraceLayer};
 
-use crate::{app::AppState, config::server::ServerConfig};
+use crate::{framework::AppState, config::server::ServerConfig};
 
 
 pub struct Server  {

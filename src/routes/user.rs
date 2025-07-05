@@ -1,7 +1,4 @@
 use anyhow::Context;
-use crate::entity::sys_user::ActiveModel;
-use crate::enums::Gender;
-use crate::param_valid::Path;
 use axum::{Router, debug_handler, routing};
 use axum::extract::State;
 use sea_orm::{prelude::*, ActiveValue, IntoActiveModel};
@@ -11,12 +8,15 @@ use sea_orm::{
 use serde::Deserialize;
 use validator::Validate;
 
-use crate::app::AppState;
-use crate::common::{Page, PaginationParams};
+use crate::entity::sys_user::ActiveModel;
 use crate::entity::{prelude::SysUser, sys_user};
-use crate::error::{ApiError, ApiResult};
-use crate::response::ApiResponse;
-use crate::valid::{ValidJson, ValidQuery};
+use crate::enums::Gender;
+use crate::framework::request::param_valid::Path;
+use crate::framework::AppState;
+use crate::framework::common::{Page, PaginationParams};
+use crate::framework::error::{ApiError, ApiResult};
+use crate::framework::response::ApiResponse;
+use crate::framework::request::valid::{ValidJson, ValidQuery};
 
 pub fn create_router() -> Router<AppState> {
     Router::new()
@@ -103,7 +103,7 @@ pub struct UserParams {
     pub password: String,
 
     // 自定义的校验器，校验手机号, 指定方法，方法中返回的错误将作为校验失败的错误
-    #[validate(custom(function = "crate::utils::validation::is_mobile_phone"))]
+    #[validate(custom(function = "crate::framework::utils::validation::is_mobile_phone"))]
     pub mobile_phone: String,
 
     pub birthday: Date,

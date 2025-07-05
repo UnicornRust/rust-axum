@@ -1,7 +1,7 @@
 use axum::extract::{FromRequest, FromRequestParts};
 use axum_valid::HasValidate;
 
-use crate::error::ApiError;
+use super::super::error::ApiError;
 
 /*
 * 这里需要自定义抽取器，主要实现 FromRequestParts 到参数抽取

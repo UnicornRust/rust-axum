@@ -5,7 +5,7 @@ use sea_orm::prelude::async_trait::async_trait;
 use sea_orm::ActiveValue;
 use serde::{Deserialize, Serialize};
 
-use crate::{enums::Gender, utils::generator::next_id};
+use crate::{enums::Gender, framework::utils::generator::next_id};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
 #[sea_orm(table_name = "sys_user")]
@@ -17,6 +17,7 @@ pub struct Model {
     pub name: String,
     pub gender: Gender,
     pub account: String,
+    #[serde(skip_serializing)]
     pub password: String,
     pub mobile_phone: String,
     pub birthday: Date,

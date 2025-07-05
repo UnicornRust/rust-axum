@@ -1,4 +1,4 @@
-use rust_axum::{ app, routes};
+use rust_axum::{ framework, routes};
 
 // Axum web 开发三部曲 
 //
@@ -8,5 +8,5 @@ use rust_axum::{ app, routes};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()>{
-    app::run(routes::create_router()).await
+    framework::run(routes::create_router()).await
 }
